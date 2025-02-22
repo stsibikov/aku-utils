@@ -1,0 +1,21 @@
+[project]
+name = "aku-utils"
+version = "0.1.0"
+description = "Utils for data processing"
+authors = [
+    {name = "stsibikov"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas (>=2.2.3,<3.0.0)",
+    "ipykernel (>=6.29.5,<7.0.0)"
+]
+packages = [
+    { include = "aku_utils" }
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
