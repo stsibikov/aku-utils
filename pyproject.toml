@@ -10,11 +10,17 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pandas (>=2.2.3,<3.0.0)",
-    "ipykernel (>=6.29.5,<7.0.0)"
+    "ipykernel (>=6.29.5,<7.0.0)",
+    "plotly (>=6.0.0,<7.0.0)",
+    "nbformat (>=5.10.4,<6.0.0)",
+    "matplotlib (>=3.10.0,<4.0.0)"
 ]
 packages = [
     { include = "aku_utils" }
 ]
+
+[project.urls]
+Homepage = "https://github.com/stsibikov/aku-utils"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
