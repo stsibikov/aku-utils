@@ -101,6 +101,10 @@ def panel_data(
                 'global' : {'alpha' : 0.5, 'beta' : 4},
                 'local' : {'alpha' : 1, 'beta' : 8},
             },
+            'random' : {
+                'global' : {'alpha' : 0.5, 'beta' : 4},
+                'local' : {'alpha' : 1, 'beta' : 8},
+            },
             'min_scale' : 0.1,
             'min_start' : -100,
             'max_start' : 100,
@@ -137,6 +141,14 @@ def panel_data(
             shape=config['daily']['local']['alpha'],
             scale=config['daily']['local']['beta'],
             size=num_objs) + config['min_scale'],
+        'random_global_scale' : np.random.gamma(
+            shape=config['random']['global']['alpha'],
+            scale=config['random']['global']['beta'],
+            size=num_objs) + config['min_scale'],
+        'random_local_scale' : np.random.gamma(
+            shape=config['random']['local']['alpha'],
+            scale=config['random']['local']['beta'],
+            size=num_objs) + config['min_scale'],
     }
     objs = pd.DataFrame(objs_base)
 
@@ -152,7 +164,6 @@ def panel_data(
         window=128,
         double_smooth=True
     )
-
 
     trend_effects = trend_effects.assign(**{
         'dt' : date_range
@@ -171,40 +182,45 @@ def panel_data(
         on='dt',
         suffixes=('', '_base')
     )
+
     df = df.assign(**{
         'hour' : df['dt'].dt.hour,
         'day_of_week' : df['dt'].dt.day_of_week
     })
-    daily_effects = gen_effects(n_periods=24, num_objs=num_objs, window=5)
 
+    daily_effects = gen_effects(n_periods=24, num_objs=num_objs, window=5)
 
     daily_effects = daily_effects.reset_index(names='hour')
 
     daily_effects = daily_effects.melt(
         id_vars='hour',
-        value_vars=daily_effects.columns,
+        value_vars=list(daily_effects.columns),
         var_name='obj_id',
         value_name='daily_effect',
     )
+
     df = df.merge(
         daily_effects,
         on=['obj_id', 'hour']
     )
+
     df = df.merge(
         daily_effects.loc[daily_effects['obj_id'] == 'base', ['hour', 'daily_effect']],
         on='hour',
         suffixes=('', '_base')
     )
+
     weekly_effects = gen_effects(n_periods=7, num_objs=num_objs, window=3)
 
     weekly_effects = weekly_effects.reset_index(names='day_of_week')
 
     weekly_effects = weekly_effects.melt(
         id_vars='day_of_week',
-        value_vars=weekly_effects.columns,
+        value_vars=list(weekly_effects.columns),
         var_name='obj_id',
         value_name='weekly_effect',
     )
+
     df = df.merge(
         weekly_effects,
         on=['obj_id', 'day_of_week']
@@ -215,6 +231,7 @@ def panel_data(
         on='day_of_week',
         suffixes=('', '_base')
     )
+
     df['target'] = (
         df['start'] +
         df['trend_local_scale'] * df['trend'] + df['trend_global_scale'] * df['trend_base'] +
