@@ -1,3 +1,12 @@
+'''
+Module for generating and processing configs for transforms
+
+Main methods:
+    flatten: multiply configs using a dict with lists as values
+    finalize: validate and process configs
+'''
+
+
 from typing import Union, List, Dict, Any
 import warnings
 from itertools import product
@@ -15,7 +24,7 @@ transforms_order_dict = {key : i for i, key in enumerate(TRANSFORMS_ORDER)}
 
 def add_name(cf : Dict):
     '''
-    Adds a name keyword to the config if it wasnt provided by user,
+    Adds a name key to the config if it wasnt provided by user,
     which is unrecommended
     '''
     cf_copy = cf.copy()
@@ -35,7 +44,7 @@ def add_name(cf : Dict):
 
         params = [f'{k} {to_str(v)}' for k, v in cf_copy.items()]
 
-        cf['name'] = ','.join(
+        cf['name'] = ' '.join(
             main + trues + params
         )
     return cf
@@ -133,6 +142,9 @@ def finalize(cfs : List[Dict[str, Any]]):
     * removing duplicates
     * sorting keys in config and configs themselves
     '''
+    if isinstance(cfs, dict):
+        cfs = [cfs]
+
     cfs = [validate(cf) for cf in cfs]
 
     # remove duplicates, pass through unique configs
