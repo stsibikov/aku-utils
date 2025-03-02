@@ -1,3 +1,8 @@
+'''
+A utils module that contains light weight utils for type wrangling.
+Used by other modules
+'''
+
 from datetime import datetime
 
 curr_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
