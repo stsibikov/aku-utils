@@ -1,6 +1,6 @@
 [project]
 name = "aku-utils"
-version = "0.1.1"
+version = "0.1.2"
 description = "Utils for data processing"
 authors = [
     {name = "stsibikov"}
@@ -19,7 +19,7 @@ packages = [
 
 [project.urls]
 homepage = "https://github.com/stsibikov/aku-utils"
-repository = "https://github.com/stsibikov/aku-utils"
+package = "https://pypi.org/project/aku-utils/"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -27,4 +27,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
+black = "^25.1.0"
 

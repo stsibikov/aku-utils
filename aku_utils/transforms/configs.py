@@ -22,10 +22,13 @@ keys_order_dict = {key : i for i, key in enumerate(KEYS_ORDER)}
 transforms_order_dict = {key : i for i, key in enumerate(TRANSFORMS_ORDER)}
 
 
-def add_name(cf : Dict):
+def get_name(cf : Dict):
     '''
-    Adds a name key to the config if it wasnt provided by user,
-    which is unrecommended
+    Adds a name key to the config, which is used as the column name
+
+    Special
+    ---
+    l1, l2: `l1 2 l3 3` -> `2 - 3`
     '''
     cf_copy = cf.copy()
 
@@ -35,18 +38,30 @@ def add_name(cf : Dict):
             return ' '.join([str(i) for i in v])
         return v
 
-    if 'name' not in cf_copy.keys():
-        main = [cf_copy.pop('t'), cf_copy.pop('c')]
 
-        trues = [k for k, v in cf_copy.items() if v is True]
-        for k in trues:
-            del cf_copy[k]
+    main = [cf_copy.pop('t'), cf_copy.pop('c')]
 
-        params = [f'{k} {to_str(v)}' for k, v in cf_copy.items()]
+    trues = [k for k, v in cf_copy.items() if v is True]
+    for k in trues:
+        del cf_copy[k]
 
-        cf['name'] = ' '.join(
-            main + trues + params
-        )
+    params = []
+
+    # this is the start of special symbol parsing
+    if 'l1' in cf_copy and 'l2' in cf_copy:
+        params += [f"{cf_copy.pop('l1')}-{cf_copy.pop('l2')}"]
+
+    # this is the end of special symbol parsing
+    params += [f'{k} {to_str(v)}' for k, v in cf_copy.items()]
+
+    res = ' '.join(
+        main + trues + params
+    )
+    return res
+
+
+def add_name(cf: Dict):
+    cf['name'] = get_name(cf)
     return cf
 
 
