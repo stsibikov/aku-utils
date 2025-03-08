@@ -8,6 +8,8 @@ from typing import List, Dict, Tuple, Union, Any, Optional
 from datetime import datetime
 import pandas as pd
 import numpy as np
+from aku_utils.transforms import configs
+
 
 class Lags(BaseEstimator, TransformerMixin):
     def __init__(
@@ -182,7 +184,7 @@ class SpecialDays(BaseEstimator, TransformerMixin):
             for config in self.config
         })
 
-        df = df.drop(columns=dtc)
+        df= df.drop(columns=dtc)
         return df
     
     def is_in_period(self, df, cf):

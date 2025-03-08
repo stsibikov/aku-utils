@@ -1,9 +1,11 @@
 '''
 Module for generating and processing configs for transforms
 
-Main methods:
-    flatten: multiply configs using a dict with lists as values
-    finalize: validate and process configs
+# Main methods
+
+flatten: multiply configs using a dict with lists as values
+finalize: validate and process configs
+
 '''
 
 
@@ -29,8 +31,9 @@ def get_name(cf : Dict):
     Special
     ---
     l1, l2: `l1 2 l3 3` -> `2 - 3`
+    hidden - contains a value or a dict that will not be included in the name
     '''
-    cf_copy = cf.copy()
+    cf = cf.copy()
 
     def to_str(v):
         '''iterable to string'''
@@ -38,26 +41,28 @@ def get_name(cf : Dict):
             return ' '.join([str(i) for i in v])
         return v
 
+    main = [cf.pop('t'), cf.pop('c')]
 
-    main = [cf_copy.pop('t'), cf_copy.pop('c')]
-
-    trues = [k for k, v in cf_copy.items() if v is True]
+    trues = [k for k, v in cf.items() if v is True]
     for k in trues:
-        del cf_copy[k]
+        del cf[k]
 
     params = []
 
-    # this is the start of special symbol parsing
-    if 'l1' in cf_copy and 'l2' in cf_copy:
-        params += [f"{cf_copy.pop('l1')}-{cf_copy.pop('l2')}"]
+    # start of special symbol parsing
+    cf.pop('hidden', None)
 
-    # this is the end of special symbol parsing
-    params += [f'{k} {to_str(v)}' for k, v in cf_copy.items()]
+    # lag 1 and lag 2 for delta
+    if 'l1' in cf and 'l2' in cf:
+        params += [f"{cf.pop('l1')}-{cf.pop('l2')}"]
 
-    res = ' '.join(
+    # end of special symbol parsing
+    params += [f'{k} {to_str(v)}' for k, v in cf.items()]
+
+    name = ' '.join(
         main + trues + params
     )
-    return res
+    return name
 
 
 def add_name(cf: Dict):
@@ -95,6 +100,90 @@ def flatten(cfs : Union[Dict, List[Dict]]):
     return flattened_cfs
 
 
+def flatten_delta_chain(cfs : Union[Dict, List[Dict]]):
+    '''
+    Flattens a (list of) config(s). See Usage
+    Specifically for delta transform, producing "chained" lags (0-1, 1-2 etc)
+
+    Arguments
+    ---
+        cfs: a (list of) config(s). Must contain `l` keyword which is
+        used for new column generation
+
+    Usage
+    ---
+    ```python
+    config = [
+        {'t' : 'delta', 'c' : 'target', 'l' : range(4)},
+        {'t' : 'delta', 'c' : 'event_a', 'l' : range(3)},
+    ]
+    >>> flatten_delta_chain(config)
+    [{'t': 'delta', 'c': 'target', 'l1': 0, 'l2': 1},
+    {'t': 'delta', 'c': 'target', 'l1': 1, 'l2': 2},
+    {'t': 'delta', 'c': 'target', 'l1': 2, 'l2': 3},
+    {'t': 'delta', 'c': 'event_a', 'l1': 0, 'l2': 1},
+    {'t': 'delta', 'c': 'event_a', 'l1': 1, 'l2': 2}]
+    ```
+    '''
+    if isinstance(cfs, dict):
+        cfs = [cfs]
+
+    flattened_cfs = []
+    for cf in cfs:
+        curr_cf = cf.copy()
+
+        del curr_cf['l']
+
+        new_cf_list = [
+            {**curr_cf, 'l1' : l1, 'l2' : l1+1}
+            for l1 in cf['l'][:-1]
+        ]
+        flattened_cfs.extend(new_cf_list)
+    return flattened_cfs
+
+
+def flatten_delta_base(cfs : Union[Dict, List[Dict]]):
+    '''
+    Flattens a (list of) config(s). See Usage
+    Specifically for delta transform, producing "base" lags (0-1, 0-2 etc)
+
+    Arguments
+    ---
+        cfs: a (list of) config(s). Must contain `l` keyword which is
+        used for new column generation
+
+    Usage
+    ---
+    ```python
+    config = [
+        {'t' : 'delta', 'c' : 'target', 'l' : range(4)},
+        {'t' : 'delta', 'c' : 'event_a', 'l' : range(3)},
+    ]
+    >>> flatten_delta_base(config)
+    [{'t': 'delta', 'c': 'target', 'l1': 0, 'l2': 1},
+    {'t': 'delta', 'c': 'target', 'l1': 0, 'l2': 2},
+    {'t': 'delta', 'c': 'target', 'l1': 0, 'l2': 3},
+    {'t': 'delta', 'c': 'event_a', 'l1': 0, 'l2': 1},
+    {'t': 'delta', 'c': 'event_a', 'l1': 0, 'l2': 2}]
+    ```
+    '''
+    if isinstance(cfs, dict):
+        cfs = [cfs]
+
+    flattened_cfs = []
+    for cf in cfs:
+        curr_cf = cf.copy()
+
+        del curr_cf['l']
+
+        new_cf_list = [
+            {**curr_cf, 'l1' : cf['l'][0], 'l2' : l2}
+            for l2 in cf['l'][1:]
+        ]
+        flattened_cfs.extend(new_cf_list)
+    return flattened_cfs
+
+
 def pick_out_duplicates(cfs : List[Dict]):
     '''picks out duplicates, storing them in a separate list
     only works on dicts'''
@@ -104,12 +193,12 @@ def pick_out_duplicates(cfs : List[Dict]):
     for d in cfs:
         # this step may scrumble key order
         # intentionally left out bc
-        # we sort keys anyway later
+        # we sort keys later anyway
 
-        # fails if any part of tuple is a list
+        # fails if any part of a tuple is a list
         # so we must enforce no lists as parameters
         dict_tuple = tuple(sorted(d.items()))
-    
+
         if dict_tuple in seen:
             duplicates.add(dict_tuple)
 
@@ -120,7 +209,7 @@ def pick_out_duplicates(cfs : List[Dict]):
     return uniques, duplicates
 
 
-def order_keys(cf):
+def order_keys(cf : Dict) -> Dict:
     '''
     sorts config's keys (parameters) in accordance to KEYS_ORDER
     '''
@@ -137,7 +226,7 @@ def validate(cf):
     '''
     forces iterables into tuples
 
-    TODO add field validation, eg lag mustnt have window, and mean must have alpha
+    TODO add field validation, eg lag mustn't have `window`, and expmean must have `alpha`
     '''
     def iters_to_tuple(v):
         if is_iter(v):
@@ -170,6 +259,8 @@ def finalize(cfs : List[Dict[str, Any]]):
 
     # add names keywords to configs
     cfs = [add_name(cf) for cf in cfs]
+
+    # cfs = [postprocess(cf) for cf in cfs]
 
     # order keys in each configs in a specific order
     cfs = [order_keys(cf) for cf in cfs]

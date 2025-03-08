@@ -1,0 +1,7 @@
+[flake8]
+inline-quotes = '
+multiline-quotes = '''
+docstring-quotes = '''
+avoid-escape = True
+ignore = E203, W503, E251
+max-line-length = 120
