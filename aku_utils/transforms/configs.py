@@ -135,7 +135,7 @@ def flatten_delta_chain(cfs : Union[Dict, List[Dict]]):
         del curr_cf['l']
 
         new_cf_list = [
-            {**curr_cf, 'l1' : l1, 'l2' : l1+1}
+            {**curr_cf, 'l1' : l1, 'l2' : l1 + 1}
             for l1 in cf['l'][:-1]
         ]
         flattened_cfs.extend(new_cf_list)
@@ -209,6 +209,21 @@ def pick_out_duplicates(cfs : List[Dict]):
     return uniques, duplicates
 
 
+def postprocess(cf):
+    '''add special stuff like column names to find for delta transform
+
+    inplace operation, so it modifies the original dictionary'''
+    if cf['t'] == 'delta':
+        base = {'t' : 'lag', 'c' : cf['c']}
+        first = {**base, 'l' : cf['l1']}
+        second = {**base, 'l' : cf['l2']}
+        cf.setdefault('hidden', {}).update({
+            'first_name' : get_name(first),
+            'second_name' : get_name(second),
+        })
+    return cf
+
+
 def order_keys(cf : Dict) -> Dict:
     '''
     sorts config's keys (parameters) in accordance to KEYS_ORDER
@@ -257,10 +272,10 @@ def finalize(cfs : List[Dict[str, Any]]):
     if duplicates:
         warnings.warn(f"duplicate configs found: {duplicates}")
 
+    # cfs = [postprocess(cf) for cf in cfs]
+
     # add names keywords to configs
     cfs = [add_name(cf) for cf in cfs]
-
-    # cfs = [postprocess(cf) for cf in cfs]
 
     # order keys in each configs in a specific order
     cfs = [order_keys(cf) for cf in cfs]

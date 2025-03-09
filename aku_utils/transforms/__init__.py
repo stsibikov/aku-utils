@@ -112,7 +112,6 @@ class SpecialDays(BaseEstimator, TransformerMixin):
         self.month = month
         self.day = day
         self.hour = hour
-    
 
     def parse_date(self, v):
         '''
@@ -123,16 +122,15 @@ class SpecialDays(BaseEstimator, TransformerMixin):
         try:
             date = datetime.strptime(v, '%m-%d %H:%M')
             date_tuple = date.month, date.day, date.hour
-        except ValueError as err:
+        except ValueError:
             try:
                 date = datetime.strptime(v, '%m-%d')
                 date_tuple = date.month, date.day
             except ValueError as err:
                 print(f'{self.__class__.__name__}: invalid date format. see docs.')
                 raise err
-        
-        return date_tuple
 
+        return date_tuple
 
     def parse_config(
         self,
@@ -184,19 +182,19 @@ class SpecialDays(BaseEstimator, TransformerMixin):
             for config in self.config
         })
 
-        df= df.drop(columns=dtc)
+        df = df.drop(columns=dtc)
         return df
-    
+
     def is_in_period(self, df, cf):
         if cf['period_type'] == 'range':
             start, end = cf['periods']
             if start <= end:
                 srs = (start <= self.date_tuple_col) & (self.date_tuple_col <= end)
             # If the range spans into the next year (e.g., Dec -> Jan)
-            else:    
+            else:
                 srs = (self.date_tuple_col >= start) | (self.date_tuple_col <= end)
         else:
             srs = self.date_tuple_col == cf['period']
-        
+
         srs = srs.astype('int')
         return srs
