@@ -5,8 +5,9 @@ Data generation module
 import pandas as pd
 import numpy as np
 from typing import Dict, Optional
-from datetime import datetime, timedelta
-from aku_utils.common import curr_date
+from datetime import timedelta
+from aku_utils.common import today
+
 
 def gen_effects(
     n_periods : int,
@@ -34,6 +35,7 @@ def gen_effects(
 
     effects = effects.iloc[(1 + double_smooth) * window:, :].reset_index(drop=True)
     return effects
+
 
 def panel_data(
     num_objs : int = 10,
@@ -157,8 +159,8 @@ def panel_data(
     objs = pd.DataFrame(objs_base)
 
     date_range = pd.date_range(
-        start = curr_date - timedelta(days=days_back),
-        end = curr_date + timedelta(days=3, hours=23),
+        start = today - timedelta(days=days_back),
+        end = today + timedelta(days=3, hours=23),
         freq = 'h'
     )
 
@@ -237,14 +239,13 @@ def panel_data(
     )
 
     df['target'] = (
-        df['start'] +
-        df['trend_local_scale'] * df['trend'] + df['trend_global_scale'] * df['trend_base'] +
-        df['daily_local_scale'] * df['daily_effect'] + df['daily_global_scale'] * df['daily_effect_base'] +
-        df['weekly_local_scale'] * df['weekly_effect'] + df['weekly_global_scale'] * df['weekly_effect_base']
+        df['start']
+        + df['trend_local_scale'] * df['trend'] + df['trend_global_scale'] * df['trend_base']
+        + df['daily_local_scale'] * df['daily_effect'] + df['daily_global_scale'] * df['daily_effect_base']
+        + df['weekly_local_scale'] * df['weekly_effect'] + df['weekly_global_scale'] * df['weekly_effect_base']
     )
 
     if not full_df:
         df = df[['obj_id', 'obj', 'dt', 'target']]
 
     return df
-
