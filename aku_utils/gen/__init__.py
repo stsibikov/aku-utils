@@ -1,11 +1,12 @@
 '''
-Data generation module
+Generation module
+Wrappers for numpy random funcs
 '''
 
 import pandas as pd
 import numpy as np
 from typing import Dict, Optional
-from datetime import timedelta
+from datetime import datetime, timedelta
 from aku_utils.common import today
 
 
@@ -249,3 +250,33 @@ def panel_data(
         df = df[['obj_id', 'obj', 'dt', 'target']]
 
     return df
+
+
+class PanelData:
+    def __init__(
+        self,
+        n_objects: int = 10,
+        start: datetime = today - timedelta(days=60),
+        end: datetime = today + timedelta(days=7),
+        seed: Optional[int] = None,
+    ) -> None:
+        self.n_objects = n_objects
+        self.start = start
+        self.end = end
+        self.seed = seed
+
+    def gen(self) -> pd.DataFrame:
+        pass
+
+
+def gamma(mean, var, **kwargs) -> np.ndarray:
+    """
+    Wrapper for `np.random.gamma` that accepts mean and variance
+    instead of esoteric shape and scale
+    """
+    array = np.random.gamma(
+        shape=mean**2 / var,
+        scale=var / mean,
+        **kwargs
+    )
+    return array
