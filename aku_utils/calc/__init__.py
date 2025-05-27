@@ -108,12 +108,12 @@ def wavg(
     if not name:
         name = f'{value}_wavg'
 
-    res : pd.Series = (df['weighted_value'] / df[weight]).rename(name)
+    avg : pd.Series = (df['weighted_value'] / df[weight]).rename(name)
 
     if return_df:
-        res = res.to_frame().reset_index()  # type: ignore
+        avg = avg.to_frame().reset_index()  # type: ignore
 
-    return res
+    return avg
 
 
 def wmedian(
@@ -187,7 +187,7 @@ def wmedian(
         / df['weight_for_wmean']
     )
 
-    res = wavg(
+    avg = wavg(
         df,
         value,
         'weight_for_wmean',
@@ -195,12 +195,12 @@ def wmedian(
         return_df=return_df,
         name=name
     )
-    return res
+    return avg
 
 
 class BiasFunc:
     def __init__(self, point1, point2, a) -> None:
-        """
+        '''
         Implementation of Barron 2020 bias function, may be slightly modified
 
         [Link to plot](https://www.desmos.com/calculator/cybgxv3yd0) of the function.
@@ -230,7 +230,7 @@ class BiasFunc:
         equal to .5 means that the interpolation between (1, 1) and (6, 0) will be linear.
 
         This is implemented in WindowWeights (same module)
-        """
+        '''
         self.point1 = point1
         self.point2 = point2
         self.a = a
@@ -275,3 +275,46 @@ def get_window_weights(
         w = w / w.sum()
 
     return w
+
+
+def wmavg(
+    arr,
+    weights,
+    wrap_back: bool = False,
+):
+    '''
+    Calculate weighted moving average. For element at position `i`, its
+    weighted average will be:
+    `arr[i] * weights[0] + arr[i-1] * weights[1] + arr[i-2] * weights[2] + ...`
+
+    Parameters
+    ---
+    wrap_back:
+        whether to wrap the array around.
+        For example, if array is [1,  2,  3,  4,  5,  6,  7,  8,  9, 10]
+        and weights are [.7, .2, .1], 1st element in the output is
+        `1 * .7 + 10 * .2 + 9 * .1`
+
+    Returns
+    ---
+    array of same length as the starting one
+    '''
+    if wrap_back:
+        # number of elements that will be moved back and forth to
+        # simulate array being wrapped around
+        n_pop_elements = len(weights)-1
+        # add starting elements to end of the array
+        arr = np.concat([arr, arr[:n_pop_elements]])
+
+    avg = np.convolve(arr, weights, mode='full')[:len(arr)]
+
+    if wrap_back:
+        # concat 1) elements that were copied to the end
+        # of the array and 2) original array without the starting
+        # elements
+        avg = np.concat([
+            avg[-n_pop_elements:],  # type: ignore
+            avg[n_pop_elements:-n_pop_elements]  # type: ignore
+        ])
+
+    return avg
