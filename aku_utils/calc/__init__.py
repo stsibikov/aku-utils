@@ -272,7 +272,7 @@ class WindowWeights:
         Intended to generate weights for weighted moving average window - a case
         described in BiasFunc (same module)
         '''
-        self.bias_func = BiasFunc(point1=(1, 1), point2=(max_objects + 1, 0), a=a)
+        self.bias_func = BiasFunc(point1=(0, 1), point2=(max_objects + 1, 0), a=a)
 
     def __call__(self, value: float | Sequence[float], normalize: bool = True):
         w = self.bias_func.__call__(value)
