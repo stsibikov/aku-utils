@@ -267,6 +267,16 @@ def get_window_weights(
     n: int = 5,
     normalize: bool = True
 ) -> np.ndarray:
+    '''
+    Creates window weights by using a bias function
+
+    Weights are decreasing and positive. Increasing `n`
+    makes the weights smoother, ie the change between this and the
+    next weight is smaller.
+
+    Decreasing `a` will produce weights that, when applied to an array for
+    a weighted moving average, will produce a smoother array.
+    '''
     bias_func = BiasFunc(point1=(0, 1), point2=(n, 0), a=a)
     w = bias_func.__call__(np.arange(n))  # type: ignore
     w = w[w > 0]
