@@ -262,23 +262,16 @@ class BiasFunc:
         return res
 
 
-class WindowWeights:
-    def __init__(
-        self,
-        a: float = 0.5,
-        max_objects: int = 5,
-    ) -> None:
-        '''
-        Intended to generate weights for weighted moving average window - a case
-        described in BiasFunc (same module)
-        '''
-        self.bias_func = BiasFunc(point1=(0, 1), point2=(max_objects + 1, 0), a=a)
+def get_window_weights(
+    a: float = 0.5,
+    n: int = 5,
+    normalize: bool = True
+) -> np.ndarray:
+    bias_func = BiasFunc(point1=(0, 1), point2=(n, 0), a=a)
+    w = bias_func.__call__(np.arange(n))  # type: ignore
+    w = w[w > 0]
 
-    def __call__(self, value: float | Sequence[float], normalize: bool = True):
-        w = self.bias_func.__call__(value)
-        w = w[w > 0]
+    if normalize:
+        w = w / w.sum()
 
-        if normalize:
-            w = w / w.sum()
-
-        return w
+    return w
