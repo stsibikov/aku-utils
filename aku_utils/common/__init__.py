@@ -4,7 +4,7 @@ Used by other modules
 '''
 
 from datetime import datetime
-from typing import Dict, Sequence, Hashable
+from typing import Dict, List, Sequence, Hashable
 
 epsilon = 1e-5
 
@@ -14,12 +14,12 @@ today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
 this_week = int(today.strftime('%Y%V'))
 
 
-def is_iter(v):
+def is_iter(v) -> bool:
     '''check if value is an iterable, with string not being counted as an iterable'''
     return hasattr(v, '__iter__') and not isinstance(v, str)
 
 
-def to_list(v):
+def to_list(v) -> List:
     if not is_iter(v):
         return [v]
     return list(v)
@@ -35,36 +35,3 @@ def unnest_dict_els(dct : Dict, els : Sequence[Hashable]) -> None:
             unnested_content = dct.pop(el)
             dct.update(unnested_content)
     return
-
-
-def manipulate_args(
-    names : Sequence[str]
-):
-    '''
-    Example decorator that manipulates function arguments
-    '''
-
-    def decorator(func):
-        from functools import wraps
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            from inspect import signature
-
-            bound_args = signature(func).bind(*args, **kwargs)
-            bound_args.apply_defaults()
-            # dict of all arguments passed to the function
-            f_args = bound_args.arguments
-
-            # the bind produces {'a' : 1, 'kwargs' : {'b' : 2}}
-            # instead of intended {'a' : 1, 'b' : 2}
-            unnest_dict_els(f_args, 'kwargs')
-
-            # parameter processing
-            # for parameter in f_args:
-            #     if parameter in names and isinstance(parameter, int):
-            #         f_args[parameter] = f_args[parameter] + 1
-
-            return func(**f_args)
-        return wrapper
-    return decorator

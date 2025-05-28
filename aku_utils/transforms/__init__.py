@@ -15,7 +15,7 @@ class Lags(BaseEstimator, TransformerMixin):
     def __init__(
         self,
         config : List[Dict[str, Any]],
-        prt : str | List[str],
+        group : str | List[str],
     ):
         '''
         Adds lag features
@@ -28,7 +28,7 @@ class Lags(BaseEstimator, TransformerMixin):
                 list of dicts specifying how to generate columns
                 (see `aku_utils.transforms.configs`)
         '''
-        self.prt = prt
+        self.group = group
         self.config = config
 
     def fit(self, *args):
@@ -42,16 +42,16 @@ class Lags(BaseEstimator, TransformerMixin):
         return dfat
 
     def lag(self, df, cf):
-        srs = df.groupby(self.prt)[cf['c']].shift(cf['l'])
+        srs = df.groupby(self.group)[cf['c']].shift(cf['l'])
         return srs
 
     def mean(self, df, cf):
-        srs = df.groupby(self.prt)[cf['c']].shift(cf['l']).rolling(cf['w'], min_periods=1).mean()
+        srs = df.groupby(self.group)[cf['c']].shift(cf['l']).rolling(cf['w'], min_periods=1).mean()
         return srs
 
     def expmean(self, df, cf):
         srs = (
-            df.groupby(self.prt)[cf['c']].shift(cf['l'])
+            df.groupby(self.group)[cf['c']].shift(cf['l'])
             .ewm(alpha=cf['a']).mean()
         )
         return srs

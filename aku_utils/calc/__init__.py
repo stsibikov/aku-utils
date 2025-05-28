@@ -288,43 +288,86 @@ def get_window_weights(
 
 
 def wmavg(
-    arr,
-    weights,
-    wrap_back: bool = False,
-):
+    df : pd.DataFrame,
+    value : str | Sequence[str],
+    group : str | Sequence[str],
+    weights : Sequence[float],
+    wrap : bool = False
+) -> pd.Series:
     '''
-    Calculate weighted moving average. For element at position `i`, its
-    weighted average will be:
-    `arr[i] * weights[0] + arr[i-1] * weights[1] + arr[i-2] * weights[2] + ...`
+    Computes a weighted moving average on a pandas dataframe per group
 
-    Parameters
+    Arguments
     ---
-    wrap_back:
-        whether to wrap the array around.
-        For example, if array is [1,  2,  3,  4,  5,  6,  7,  8,  9, 10]
-        and weights are [.7, .2, .1], 1st element in the output is
-        `1 * .7 + 10 * .2 + 9 * .1`
+        wrap:
+            inserts end of groups into their starts before
+            calculating the average to get averages where
+            starts of groups look like the ends. Useful for
+            generating random effects for cyclical series, like
+            days of week, hours of day and so on.
 
-    Returns
+    Considerations
     ---
-    array of same length as the starting one
+    * Sort appropriately before using.
+    * Weights are not internally normalized
+
+    Algorithm
+    ---
+    Creates lagged columns based on length of weights
+    and then calculates a weighted average in a row like usual
     '''
-    if wrap_back:
-        # number of elements that will be moved back and forth to
-        # simulate array being wrapped around
-        n_pop_elements = len(weights)-1
-        # add starting elements to end of the array
-        arr = np.concat([arr, arr[:n_pop_elements]])
+    from aku_utils.transforms.configs import flatten, finalize
+    from aku_utils.transforms import Lags
+    group = to_list(group)
+    value = to_list(value)
 
-    avg = np.convolve(arr, weights, mode='full')[:len(arr)]
+    df = df[group + value]
 
-    if wrap_back:
-        # concat 1) elements that were copied to the end
-        # of the array and 2) original array without the starting
-        # elements
-        avg = np.concat([
-            avg[-n_pop_elements:],  # type: ignore
-            avg[n_pop_elements:-n_pop_elements]  # type: ignore
+    if wrap:
+        # add end of series to the start
+
+        # how many rows per group do we need to add
+        n_add_rows = len(weights) - 1
+        # add last n_add_rows to the start of each group
+        # the order is preserved 
+        df = pd.concat([
+            df.groupby(group).tail(n_add_rows),
+            df
         ])
+
+    lag_config = flatten(
+        {'c' : value, 't' : 'lag', 'l' : range(1, len(weights))}
+    )
+
+    lag_config = finalize(lag_config)
+
+    lag_transformer = Lags(
+        config=lag_config,
+        group=group
+    )
+
+    # adds lagged columns
+    df = lag_transformer.fit_transform(df)
+
+    if wrap:
+        # delete those ends of groups we added earlier
+
+        # how many rows in total we have to remove
+        # all of them are at the start so removing them is no problem
+        n_delete_rows = n_add_rows * df[group].drop_duplicates().shape[0]
+        df = df.iloc[n_delete_rows:, :]
+    else:
+        # fills nans in lagged (and value) columns with 0
+        # to prevent rows from resulting to nan
+        # also thats just how a window mean/sum/whatever works
+        df.iloc[:, len(group):] = df.iloc[:, len(group):].fillna(0)
+
+    # columns to perform multiplication on
+    mult_col_list = value + [c['name'] for c in lag_config]
+
+    # get a weighted average per row
+    avg = (
+        df[mult_col_list] * weights
+    ).sum(axis=1)
 
     return avg

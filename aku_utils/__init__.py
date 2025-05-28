@@ -8,7 +8,7 @@ config / cf - singular, even if config is a list
 value / v
 dict / d
 curr_... - current ...
-group - pandas groupby columns
+group - a grouping column or sequence of columns
 '''
 from aku_utils.common import *
 
