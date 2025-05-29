@@ -1,4 +1,4 @@
-from aku_utils import to_list, epsilon
+from aku_utils import to_list, is_sequence_of_str, epsilon
 import pandas as pd
 import numpy as np
 from typing import Optional, Sequence
@@ -199,7 +199,7 @@ class BiasFunc:
             raise ValueError(f"Attribute `a` cannot be part of: {forbidden}")
         self._a = value
 
-    def __call__(self, value: float | Sequence[float]):
+    def __call__(self, value: float | Sequence[float]) -> float | Sequence[float]:
         x0 = self.point1[0]
         y0 = self.point1[1]
 
@@ -231,7 +231,7 @@ def get_window_weights(
     a weighted moving average, will produce a smoother array.
     '''
     bias_func = BiasFunc(point1=(0, 1), point2=(n, 0), a=a)
-    w = bias_func.__call__(np.arange(n))  # type: ignore
+    w : np.ndarray = bias_func.__call__(np.arange(n))  # type: ignore
     w = w[w > 0]
 
     if normalize:
@@ -244,7 +244,8 @@ def wmavg(
     df : pd.DataFrame,
     value : str | Sequence[str],
     group : str | Sequence[str],
-    weights : Sequence[float],
+    weights : Sequence[float] | Sequence[str],
+    *,
     wrap : bool = False
 ) -> pd.Series:
     '''
@@ -252,6 +253,9 @@ def wmavg(
 
     Arguments
     ---
+        weights:
+            if Sequence[float]: numerical weights
+            if Sequence[str]: names of df columns containing weights
         wrap:
             inserts end of groups into their starts before
             calculating the average to get averages where
@@ -273,8 +277,15 @@ def wmavg(
     from aku_utils.transforms import Lags
     group = to_list(group)
     value = to_list(value)
+    weights = to_list(weights)
 
-    df = df[group + value]
+    # if our weights are columns of the dataframe
+    # we add it to our table
+    # also it dictates how we multiply things
+    # at the end
+    use_weight_cols = is_sequence_of_str(weights)
+
+    df = df[group + value + (weights if use_weight_cols else [])]
 
     if wrap:
         # add end of series to the start
@@ -282,7 +293,7 @@ def wmavg(
         # how many rows per group do we need to add
         n_add_rows = len(weights) - 1
         # add last n_add_rows to the start of each group
-        # the order is preserved 
+        # the order is preserved
         df = pd.concat([
             df.groupby(group).tail(n_add_rows),
             df
@@ -319,8 +330,11 @@ def wmavg(
     mult_col_list = value + [c['name'] for c in lag_config]
 
     # get a weighted average per row
-    avg = (
-        df[mult_col_list] * weights
-    ).sum(axis=1)
+    if use_weight_cols:
+        avg = df[mult_col_list].multiply(df[weights].values).sum(axis=1)
+    else:
+        avg = (
+            df[mult_col_list] * weights
+        ).sum(axis=1)
 
     return avg

@@ -14,9 +14,17 @@ today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
 this_week = int(today.strftime('%Y%V'))
 
 
-def is_iter(v) -> bool:
-    '''check if value is an iterable, with string not being counted as an iterable'''
-    return hasattr(v, '__iter__') and not isinstance(v, str)
+def is_iter(obj) -> bool:
+    '''
+    check if value is an iterable, with string not being counted as an iterable
+    '''
+    return hasattr(obj, '__iter__') and not isinstance(obj, str)
+
+
+def is_sequence_of_str(obj):
+    return (
+        is_iter(obj) and all(isinstance(item, str) for item in obj)
+    )
 
 
 def to_list(v) -> List:
