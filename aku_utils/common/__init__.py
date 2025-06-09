@@ -1,6 +1,5 @@
 '''
-A utils module that contains light weight utils for type wrangling.
-Used by other modules
+Commonly used variables and functions
 '''
 
 from datetime import date, datetime
