@@ -3,15 +3,15 @@ A utils module that contains light weight utils for type wrangling.
 Used by other modules
 '''
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Dict, List, Sequence, Hashable
 
 epsilon = 1e-5
 
-today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+today = date.today()
 
-# the format is int({year}{week_of_year})
-this_week = int(today.strftime('%Y%V'))
+# iso compliant {year}{week} int
+this_week = int(today.strftime('%G%V'))
 
 
 def is_iter(obj) -> bool:

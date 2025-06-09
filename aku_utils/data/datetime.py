@@ -1,6 +1,14 @@
-from aku_utils import this_week, today
+from aku_utils import today
+import pandas as pd
 
-datetime_functions = {
+
+def _get_week(date : pd.Series):
+    iso = date.dt.isocalendar()[['year', 'week']]
+    # attempts to set to UInt32, which results in silent bugs
+    return (100 * iso['year'] + iso['week']).astype('int')
+
+
+datetime_features = {
     'year' : lambda srs: srs.dt.year,
     'month' : lambda srs: srs.dt.month,
     'day' : lambda srs: srs.dt.day,
@@ -21,19 +29,11 @@ datetime_functions = {
     'date' : lambda srs: srs.dt.date,
     'time' : lambda srs: srs.dt.time,
     'is_leap_year' : lambda srs: srs.dt.is_leap_year,
-    'week' : lambda srs: srs.dt.strftime('%Y%V').astype('int'),
-    'relative_date' : lambda srs: (srs - today).dt.days,
-    'relative_week' : lambda srs: (
-        srs.dt.strftime('%Y%V').astype('int')
-        - this_week
-    )
+    'week' : _get_week,
+    'relative_date' : lambda srs: (srs - pd.Timestamp(today)).dt.days,
+    # 'relative_week' : lambda srs: (srs - pd.Timestamp(today)).dt.days // 7,
 }
 
-# can be used by:
-# df.assign(**{
-#     name : ak.calc.datetime_functions[name](df['dt'])
-#     for name in ak.calc.datetime_base_features
-# })
 datetime_base_features = [
     'year',
     'month',
