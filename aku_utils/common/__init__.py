@@ -3,7 +3,7 @@ Commonly used variables and functions
 '''
 
 from datetime import date, datetime
-from typing import Dict, List, Sequence, Hashable
+from typing import Dict, List, Sequence, Hashable, Any
 
 epsilon = 1e-5
 
@@ -42,3 +42,12 @@ def unnest_dict_els(dct : Dict, els : Sequence[Hashable]) -> None:
             unnested_content = dct.pop(el)
             dct.update(unnested_content)
     return
+
+
+def pdisplay(obj: Any) -> None:
+    '''protected display'''
+    try:
+        display(obj)
+    except NameError:
+        print(obj)
+    return None

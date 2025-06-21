@@ -6,7 +6,7 @@ Wrappers for numpy random funcs
 import pandas as pd
 import numpy as np
 from typing import Dict, Optional
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from aku_utils.common import today
 
 
@@ -280,3 +280,48 @@ def gamma(mean, var, **kwargs) -> np.ndarray:
         **kwargs
     )
     return array
+
+
+def panel_data_messy(
+    n_obj: int = 50,
+    days_back: int = 30,
+    days_forward: int = 10,
+    p_dupe: float = .2,
+    p_null: float = .1,
+):
+    '''
+    Generates a panel data with duplicate rows and missing values (in any column)
+
+    Parameters
+    ---
+        p_dupe:
+            probability of row being duplicated
+        p_null:
+            probability of a single value being null
+    '''
+    dates = pd.date_range(
+        start=date.today() - timedelta(days=days_back),
+        end=date.today() + timedelta(days=days_forward),
+        name='date'
+    ).to_frame(index=False)
+
+    base = pd.DataFrame({
+        'obj_id' : range(n_obj),
+        'base' : np.random.randint(10, size=n_obj)
+    })
+
+    df = base.merge(dates, how='cross')
+
+    df['target'] = np.random.normal(size=df.shape[0])
+    df['target'] += df['base']
+    df = df.drop(columns='base')
+
+    df['is_dupe'] = np.random.random(size=df.shape[0]) <= p_dupe
+
+    df = pd.concat([df, df[df['is_dupe']]])
+    df = df.drop(columns='is_dupe')
+
+    df = df.mask(np.random.random(df.shape) <= p_null)
+
+    df = df.sort_values(['obj_id', 'date'])
+    return df
