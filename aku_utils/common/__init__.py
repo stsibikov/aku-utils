@@ -1,8 +1,8 @@
 '''
 Commonly used variables and functions
 '''
-
-from datetime import date, datetime
+import pandas as pd
+from datetime import date
 from typing import Dict, List, Sequence, Hashable, Any
 
 epsilon = 1e-5
@@ -47,7 +47,42 @@ def unnest_dict_els(dct : Dict, els : Sequence[Hashable]) -> None:
 def pdisplay(obj: Any) -> None:
     '''protected display'''
     try:
-        display(obj)
+        display(obj)  # type: ignore
     except NameError:
         print(obj)
     return None
+
+
+def newcol(df: pd.DataFrame, name) -> str:
+    '''
+    Returns a name for a new column.
+    The function checks if the columns is
+    already in the dataframe. If it is,
+    it looks for column named "{name}_2".
+    If it is there, it looks for a column
+    with pattern "{name}_{number}" with the maximum
+    number, and then returns "{name}_{number+1}"
+    to obtain a unique name for a new column.
+    '''
+
+    cols = set(df.columns.to_list())
+
+    if name not in cols:
+        return name
+
+    new_name = f'{name}_2'
+    if new_name not in cols:
+        return new_name
+
+    import re
+    pattern = re.compile(rf'{name}_(\d+)$')
+
+    max_num = float('-inf')
+    for col in cols:
+        match = pattern.match(col)
+        if match:
+            num = int(match.group(1))
+            if num > max_num:
+                max_num = num
+
+    return f'{name}_{max_num+1}'

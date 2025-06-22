@@ -1,12 +1,11 @@
 '''
-Generation module
-Wrappers for numpy random funcs
+Data generation module
 '''
 
 import pandas as pd
 import numpy as np
 from typing import Dict, Optional
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from aku_utils.common import today
 
 
@@ -256,8 +255,8 @@ class PanelData:
     def __init__(
         self,
         n_objects: int = 10,
-        start: datetime = today - timedelta(days=60),
-        end: datetime = today + timedelta(days=7),
+        start: date = today - timedelta(days=60),
+        end: date = today + timedelta(days=7),
         seed: Optional[int] = None,
     ) -> None:
         self.n_objects = n_objects
@@ -316,12 +315,12 @@ def panel_data_messy(
     df['target'] += df['base']
     df = df.drop(columns='base')
 
-    df['is_dupe'] = np.random.random(size=df.shape[0]) <= p_dupe
+    df['is_dupe'] = np.random.random(size=df.shape[0]) < p_dupe
 
     df = pd.concat([df, df[df['is_dupe']]])
     df = df.drop(columns='is_dupe')
 
-    df = df.mask(np.random.random(df.shape) <= p_null)
+    df = df.mask(np.random.random(df.shape) < p_null)
 
     df = df.sort_values(['obj_id', 'date'])
     return df
