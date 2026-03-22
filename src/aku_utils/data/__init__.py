@@ -66,7 +66,7 @@ def reorder(
     """
     Reorder dataframe columns.
 
-    Arguments
+    Args
     ---
     value: dict[str, int], list[str]
         if `dict[str, int]`, a column (key) will be put in specified
