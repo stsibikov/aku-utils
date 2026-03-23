@@ -1,6 +1,6 @@
 [project]
 name = "aku-utils"
-version = "0.1.1"
+version = "1.0.0"
 description = "data utils"
 authors = [{ name = "Sergei Tsibikov", email = "tsibikov.sergei@gmail.com" }]
 readme = "README.md"

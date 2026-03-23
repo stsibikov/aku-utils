@@ -19,6 +19,9 @@ check: ## Run code quality tools.
 test: ## Test the code with pytest
 	@echo "🚀 Testing code: Running pytest"
 	@uv run python -m pytest --cov --cov-config=pyproject.toml --cov-report=html
+
+.PHONY: ccov
+ccov: ## see coverage report
 	cmd /c start htmlcov/index.html
 
 .PHONY: build

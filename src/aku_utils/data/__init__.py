@@ -148,31 +148,31 @@ def dedupe(
     **kwargs,
 ) -> pd.DataFrame | dict[str, pd.DataFrame]:
     """
-        If duplicates are found, and `return_dict` is True, then they will
-        be stored in the result dict, otherwise they will be logged.
+    If duplicates are found, and `return_dict` is True, then they will
+    be stored in the result dict, otherwise they will be logged.
 
-        Args
-        ---
-        subset:
-            if int, first `subset` number of columns are used as actual subset
-        kwargs:
-            for `df.duplicated()`
+    Args
+    ---
+    subset:
+        if int, first `subset` number of columns are used as actual subset
+    kwargs:
+        for `df.duplicated()`
 
-        Returns
-        ---
-        dict `{'df': dataframe, 'dupes': duplicates}` if `return_dict` is True.
+    Returns
+    ---
+    dict `{'df': dataframe, 'dupes': duplicates}` if `return_dict` is True.
 
-        dataframe if `return_dict` is False
+    dataframe if `return_dict` is False
 
-        Usage
-        ---
-        ```
-        res: dict = dedupe(df, 2, return_dict=True)
-        df: pd.DataFrame = res['df']
-        dupes: pd.DataFrame = res['dupes']
+    Usage
+    ---
+    ```
+    res: dict = dedupe(df, 2, return_dict=True)
+    df: pd.DataFrame = res['df']
+    dupes: pd.DataFrame = res['dupes']
 
 
-        df: pd.DataFrame = dedupe(df, 2)
+    df: pd.DataFrame = dedupe(df, 2)
     ```
     """
     if isinstance(subset, int):
